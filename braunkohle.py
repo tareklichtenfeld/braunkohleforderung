@@ -43,71 +43,75 @@ df_melted['Value'] = pd.to_numeric(df_melted['Value'])
 
 # Streamlit app
 st.title(':material/globe_asia: Braunkohleförderung weltweit')
-st.header(':material/timeline: Verlauf der Braunkohle-Fördermenge nach Land im Zeitraum von 1970 bis 2022:')
-
-# Auswahl der Länder
-selected_countries = st.multiselect(
-    'Wähle Länder aus:', 
-    df_melted['Land'].unique(), 
-    default=['Deutschland', 'Volksrepublik China', 'Russland']
-)
-
-# Filter die Daten basierend auf der Auswahl
-filtered_df = df_melted[df_melted['Land'].isin(selected_countries)]
-
-# Create the Altair chart
-chart = alt.Chart(filtered_df).mark_line(point=True).encode(
-    x='Jahr',
-    y=alt.Y('Value', title='Fördermenge in Mio. t'),
-    color='Land',
-    tooltip=['Jahr', 'Land', 'Value']
-).properties(
-    title='Braunkohleförderung nach Land in Millionen Tonnen',
-).interactive()
 
 
-container = st.container(border=True)
+big_container = st.container(border=True)
+with big_container:
+    st.header(':material/timeline: Verlauf der Braunkohle-Fördermenge nach Land im Zeitraum von 1970 bis 2022:')
 
-container.altair_chart(chart, use_container_width=True)
+    # Auswahl der Länder
+    selected_countries = st.multiselect(
+        'Wähle Länder aus:', 
+        df_melted['Land'].unique(), 
+        default=['Deutschland', 'Volksrepublik China', 'Russland']
+    )
 
+    # Filter die Daten basierend auf der Auswahl
+    filtered_df = df_melted[df_melted['Land'].isin(selected_countries)]
+
+    # Create the Altair chart
+    chart = alt.Chart(filtered_df).mark_line(point=True).encode(
+        x='Jahr',
+        y=alt.Y('Value', title='Fördermenge in Mio. t'),
+        color='Land',
+        tooltip=['Jahr', 'Land', 'Value']
+    ).properties(
+        title='Braunkohleförderung nach Land in Millionen Tonnen',
+    ).interactive()
+
+
+    container = st.container(border=True)
+
+    container.altair_chart(chart, use_container_width=True)
+    st.markdown('Die Daten zeigen, dass die Energiewende global unterschiedlich verläuft und von verschiedenen Faktoren wie Klimazielen, wirtschaftlicher Entwicklung und der Verfügbarkeit von Ressourcen beeinflusst wird.')
 
 st.markdown('')
 st.markdown('')
-st.markdown('')
-st.markdown('')
+
 # ... second chart ...
+big_container2 = st.container(border=True)
+with big_container2:
+    st.header(':material/percent: Prozentualer Anteil der Länder an der Braunkohleförderung für das ausgewählte Jahr zwischen 1970 und 2022:')
+    df_melted2 = df.melt(id_vars='Jahr', var_name='Land', value_name='Foerderung')
 
-st.header(':material/percent: Prozentualer Anteil der Länder an der Braunkohleförderung für das ausgewählte Jahr zwischen 1970 und 2022:')
-df_melted2 = df.melt(id_vars='Jahr', var_name='Land', value_name='Foerderung')
+    # Wandle 'Foerderung' in numerische Werte um
+    df_melted2['Foerderung'] = pd.to_numeric(df_melted2['Foerderung'])  # Diese Zeile hinzugefügt
 
-# Wandle 'Foerderung' in numerische Werte um
-df_melted2['Foerderung'] = pd.to_numeric(df_melted2['Foerderung'])  # Diese Zeile hinzugefügt
+    # Jahreszahl-Auswahl
+    selected_year = st.selectbox('Wähle ein Jahr aus:', df_melted2['Jahr'].unique())
 
-# Jahreszahl-Auswahl
-selected_year = st.selectbox('Wähle ein Jahr aus:', df_melted2['Jahr'].unique())
+    # Filtere die Daten basierend auf der ausgewählten Jahreszahl
+    filtered_df2 = df_melted2[df_melted2['Jahr'] == selected_year]
 
-# Filtere die Daten basierend auf der ausgewählten Jahreszahl
-filtered_df2 = df_melted2[df_melted2['Jahr'] == selected_year]
+    # Berechne den prozentualen Anteil jedes Landes an der Gesamtförderung
+    total_foerderung = filtered_df2['Foerderung'].sum()
+    filtered_df2['Prozent'] = (filtered_df2['Foerderung'] / total_foerderung) * 100
 
-# Berechne den prozentualen Anteil jedes Landes an der Gesamtförderung
-total_foerderung = filtered_df2['Foerderung'].sum()
-filtered_df2['Prozent'] = (filtered_df2['Foerderung'] / total_foerderung) * 100
+    # Erstelle das Altair Donut-Diagramm
+    chart2 = alt.Chart(filtered_df2).mark_arc(innerRadius=100).encode(
+        theta=alt.Theta(field="Prozent", type="quantitative", stack=True),
+        color=alt.Color(field="Land", type="nominal"),  # "Land" zu "Land" geändert
+        tooltip=['Land', 'Foerderung', alt.Tooltip('Prozent', format=".1f")]  # Auch hier im Tooltip
+    ).properties(
+        title=f'Braunkohleförderung im Jahr {selected_year}'
+    )
 
-# Erstelle das Altair Donut-Diagramm
-chart2 = alt.Chart(filtered_df2).mark_arc(innerRadius=100).encode(
-    theta=alt.Theta(field="Prozent", type="quantitative", stack=True),
-    color=alt.Color(field="Land", type="nominal"),  # "Land" zu "Land" geändert
-    tooltip=['Land', 'Foerderung', alt.Tooltip('Prozent', format=".1f")]  # Auch hier im Tooltip
-).properties(
-    title=f'Braunkohleförderung im Jahr {selected_year}'
-)
+    # Zeige das Diagramm in Streamlit an
 
-# Zeige das Diagramm in Streamlit an
+    container = st.container(border=True)
 
-container = st.container(border=True)
-
-container.altair_chart(chart2, use_container_width=True)
-
+    container.altair_chart(chart2, use_container_width=True)
+    st.markdown('Es wird deutlich, dass der Übergang zu einer nachhaltigen Energieversorgung eine globale Herausforderung ist, die internationale Zusammenarbeit und innovative Lösungen erfordert.')
 
 st.markdown('')#
 st.markdown('')
